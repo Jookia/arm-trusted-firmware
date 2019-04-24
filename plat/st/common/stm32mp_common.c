@@ -13,7 +13,10 @@
 #include <common/debug.h>
 #include <drivers/st/stm32mp_clkfunc.h>
 #include <lib/xlat_tables/xlat_tables_v2.h>
+#include <lib/spinlock.h>
 #include <plat/common/platform.h>
+
+static struct spinlock lock;
 
 uintptr_t plat_get_ns_image_entrypoint(void)
 {
@@ -95,6 +98,20 @@ bool stm32mp_lock_available(void)
 
 	/* The spinlocks are used only when MMU and data cache are enabled */
 	return (read_sctlr() & c_m_bits) == c_m_bits;
+}
+
+void stm32mp_pwr_regs_lock(void)
+{
+	if (stm32mp_lock_available()) {
+		spin_lock(&lock);
+	}
+}
+
+void stm32mp_pwr_regs_unlock(void)
+{
+	if (stm32mp_lock_available()) {
+		spin_unlock(&lock);
+	}
 }
 
 uintptr_t stm32_get_gpio_bank_base(unsigned int bank)
