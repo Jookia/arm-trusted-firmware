@@ -239,6 +239,16 @@
 				};
 			};
 
+                        i2c2_pins_a: i2c2-0 {
+                                pins {
+                                        pinmux = <STM32_PINMUX('H', 4, AF4)>, /* I2C2_SCL */
+                                                 <STM32_PINMUX('H', 5, AF4)>; /* I2C2_SDA */
+                                        bias-disable;
+                                        drive-open-drain;
+                                        slew-rate = <0>;
+                                };
+                        };
+
 			sdmmc2_b4_pins_a: sdmmc2-b4-0 {
 				pins1 {
 					pinmux = <STM32_PINMUX('B', 14, AF9)>, /* SDMMC2_D0 */
