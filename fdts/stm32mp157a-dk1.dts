@@ -245,7 +245,7 @@
 		CLK_CKPER_HSE
 		CLK_FMC_ACLK
 		CLK_QSPI_ACLK
-		CLK_ETH_DISABLED
+		CLK_ETH_PLL4P
 		CLK_SDMMC12_PLL4P
 		CLK_DSI_DSIPLL
 		CLK_STGEN_HSE
@@ -297,10 +297,15 @@
 		frac = < 0x1a04 >;
 	};
 
-	/* VCO = 594.0 MHz => P = 99, Q = 74, R = 74 */
+	/*
+	 * ETH_CLK required a 125MHz clock, so
+	 * original:  VCO = 594.0 MHz => P = 99, Q = 74, R = 74
+	 * current :  VCO = 750.0 MHz => P =125, Q = 75, R = 75
+	 */
 	pll4: st,pll@3 {
-		cfg = < 3 98 5 7 7 PQR(1,1,1) >;
+                cfg = < 3 124 5 11 11 PQR(1,1,1) >;
 	};
+
 };
 
 &bsec {
