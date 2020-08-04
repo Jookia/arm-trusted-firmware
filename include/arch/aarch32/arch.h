@@ -467,7 +467,7 @@
 /* Physical Timer CompareValue register. */
 #define CNTP_CVAL_LO		U(0x20)
 /* Physical Timer Control register. */
-#define CNTP_CTL		U(0x2c)
+/* #define CNTP_CTL		U(0x2c) */
 
 /* Physical timer control register bit fields shifts and masks */
 #define CNTP_CTL_ENABLE_SHIFT   0
