@@ -78,6 +78,10 @@
  ******************************************************************************/
 #define BL33_BASE			STM32MP_BL33_BASE
 
+/* need by flash programmer */
+#define FLASHLAYOUT_BASE               STM32MP_DDR_BASE
+#define FLASHLAYOUT_LIMIT              STM32MP_BL33_BASE
+
 /*
  * Load address of BL33 for this platform port
  */

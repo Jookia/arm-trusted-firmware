@@ -39,6 +39,9 @@
 /* Boot occurred on QSPI NOR */
 #define BOOT_API_CTX_BOOT_INTERFACE_SEL_FLASH_NOR_QSPI		0x4U
 
+/* Boot occurred on USB */
+#define BOOT_API_CTX_BOOT_INTERFACE_SEL_SERIAL_USB		0x6U
+
 /* Boot occurred on QSPI NAND */
 #define BOOT_API_CTX_BOOT_INTERFACE_SEL_FLASH_NAND_QSPI		0x7U
 
@@ -151,7 +154,8 @@ typedef struct {
 	 */
 	uint16_t boot_interface_selected;
 	uint16_t boot_interface_instance;
-	uint32_t reserved1[13];
+	uint32_t reserved1[12];
+	uint32_t usb_context;
 	uint32_t otp_afmux_values[3];
 	uint32_t reserved[5];
 	uint32_t auth_status;

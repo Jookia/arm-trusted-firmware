@@ -30,6 +30,14 @@
 #include <lib/utils.h>
 #include <plat/common/platform.h>
 
+#if STM32MP_USB_PROGRAMMER
+#include <drivers/st/io_programmer_st_usb.h>
+#include <drivers/st/usb_dwc2.h>
+#include <lib/usb/usb_core.h>
+#include <lib/usb/usb_st_dfu.h>
+#include <usb_ctx.h>
+#endif
+
 /* IO devices */
 static const io_dev_connector_t *dummy_dev_con;
 static uintptr_t dummy_dev_handle;
@@ -94,6 +102,13 @@ static io_mtd_dev_spec_t spi_nand_dev_spec = {
 #if STM32MP_SPI_NAND || STM32MP_SPI_NOR
 static const io_dev_connector_t *spi_dev_con;
 #endif
+
+#if STM32MP_USB_PROGRAMMER
+static usb_handle_t usb_core_handle;
+static usb_dfu_handle_t usb_dfu_handle;
+static pcd_handle_t pcd_handle;
+static const io_dev_connector_t *usb_dev_con;
+#endif /* STM32MP_USB_PROGRAMMER */
 
 #ifdef AARCH32_SP_OPTEE
 static const struct stm32image_part_info optee_header_partition_spec = {
@@ -256,6 +271,9 @@ static void print_boot_device(boot_api_context_t *boot_context)
 		break;
 	case BOOT_API_CTX_BOOT_INTERFACE_SEL_FLASH_NAND_QSPI:
 		INFO("Using SPI NAND\n");
+		break;
+	case BOOT_API_CTX_BOOT_INTERFACE_SEL_SERIAL_USB:
+		INFO("Using USB\n");
 		break;
 	default:
 		ERROR("Boot interface not found\n");
@@ -520,6 +538,54 @@ static void boot_spi_nand(boot_api_context_t *boot_context)
 }
 #endif /* STM32MP_SPI_NAND */
 
+#if STM32MP_USB_PROGRAMMER
+static void flash_usb(struct usb_ctx *usb_context)
+{
+	int io_result __unused;
+
+	pcd_handle.in_ep[0].maxpacket = 0x40;
+	pcd_handle.out_ep[0].maxpacket = 0x40;
+
+	pcd_handle.state = HAL_PCD_STATE_READY;
+
+	usb_core_handle.data = &pcd_handle;
+
+	usb_dwc2_init_driver(&usb_core_handle,
+			     (uint32_t *)USB_OTG_BASE);
+
+	usb_dfu_register_callback(&usb_core_handle);
+
+	stm32mp_usb_init_desc(&usb_core_handle);
+
+	usb_core_handle.ep_in[0].maxpacket = 0x40;
+	usb_core_handle.ep_out[0].maxpacket = 0x40;
+
+	usb_core_handle.ep0_state =
+		usb_context->pusbd_device_ctx->ep0_state;
+	usb_core_handle.dev_state = USBD_STATE_CONFIGURED;
+
+	usb_core_handle.class_data = &usb_dfu_handle;
+
+	usb_dfu_handle.dev_state = DFU_STATE_IDLE;
+	usb_dfu_handle.dev_status[1] = 0;
+	usb_dfu_handle.dev_status[2] = 0;
+	usb_dfu_handle.dev_status[3] = 0;
+	usb_dfu_handle.dev_status[4] = usb_dfu_handle.dev_state;
+	usb_dfu_handle.dev_status[5] = 0;
+
+	/* Register the IO devices on this platform */
+	io_result = register_io_dev_usb(&usb_dev_con);
+	assert(io_result == 0);
+
+	/* Open connections to devices */
+	io_result = io_dev_open(usb_dev_con,
+				(uintptr_t)&usb_core_handle,
+				&image_dev_handle);
+
+	assert(io_result == 0);
+}
+#endif
+
 void stm32mp_io_setup(void)
 {
 	int io_result __unused;
@@ -570,6 +636,12 @@ void stm32mp_io_setup(void)
 	case BOOT_API_CTX_BOOT_INTERFACE_SEL_FLASH_NAND_QSPI:
 		dmbsy();
 		boot_spi_nand(boot_context);
+		break;
+#endif
+#if STM32MP_USB_PROGRAMMER
+	case BOOT_API_CTX_BOOT_INTERFACE_SEL_SERIAL_USB:
+		dmbsy();
+		flash_usb((struct usb_ctx *)boot_context->usb_context);
 		break;
 #endif
 
